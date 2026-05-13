@@ -158,10 +158,10 @@ image_build: bring_assisted_service generate_python_client
 	$(CONTAINER_COMMAND) tag $(IMAGE_NAME) test-infra:latest  # For backwards computability
 
 create_hub_cluster:
-	TARGET=${DEPLOY_TARGET} assisted-service/hack/hub_cluster.sh create
+	bash -c 'set -e; source "$(ROOT_DIR)/scripts/utils.sh"; export_kubeconfig_path; TARGET="$(DEPLOY_TARGET)" "$(ROOT_DIR)/assisted-service/hack/hub_cluster.sh" create'
 
 delete_hub_cluster:
-	(cd assisted-service && TARGET=${DEPLOY_TARGET} ROOT_DIR=${ROOT_DIR}/assisted-service hack/hub_cluster.sh delete)
+	bash -c 'set -e; source "$(ROOT_DIR)/scripts/utils.sh"; export_kubeconfig_path; cd "$(ROOT_DIR)/assisted-service" && TARGET="$(DEPLOY_TARGET)" ROOT_DIR="$(ROOT_DIR)/assisted-service" hack/hub_cluster.sh delete'
 
 clean:
 	-python3 ./src/cleanup.py

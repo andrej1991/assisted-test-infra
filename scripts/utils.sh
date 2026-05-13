@@ -2,7 +2,26 @@
 
 set -o nounset
 
-export KUBECONFIG=${KUBECONFIG:-$HOME/.kube/config}
+# kubectl/kind require KUBECONFIG to point at a file. Some environments have
+# ~/.kube/config as a directory (e.g. mis-mounted volumes); use a fallback file.
+function export_kubeconfig_path() {
+    local _default="${HOME}/.kube/config"
+    local _fallback="${HOME}/.kube/kubeconfig"
+
+    if [[ -n "${KUBECONFIG:-}" ]] && [[ -d "${KUBECONFIG}" ]]; then
+        export KUBECONFIG="${_fallback}"
+    fi
+    if [[ -z "${KUBECONFIG:-}" ]]; then
+        if [[ -d "${_default}" ]]; then
+            export KUBECONFIG="${_fallback}"
+        else
+            export KUBECONFIG="${_default}"
+        fi
+    fi
+    mkdir -p "${HOME}/.kube"
+}
+
+export_kubeconfig_path
 export NAMESPACE=${NAMESPACE:-assisted-installer}
 
 # Reads /etc/os-release once per shell and exports OS_ID, OS_VERSION_ID,
