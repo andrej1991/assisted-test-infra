@@ -16,7 +16,7 @@ The setup script installs the following packages and tools to prepare the system
 - `libvirt`, `qemu-kvm`, `libvirt-devel`, `libvirt-daemon-kvm`: For virtualization and VM management.
 - `swtpm`, `swtpm-tools`: Software TPM for virtualized environments.
 - `socat`: For TCP and UNIX socket forwarding.
-- `tigervnc-server`: Remote graphical access to virtual machines.
+- `tigervnc-server`: Installed when present in repositories (remote graphical tooling on the host). Skipped on Enterprise Linux 10 and later, where this package was removed; libvirt/QEMU still provides guest VNC consoles.
 - `virt-install`: For managing libvirt-based VM creation.
 - `firewalld`: System firewall.
 - `squid`: HTTP proxy server for testing.
@@ -54,7 +54,7 @@ The setup script installs the following packages and tools to prepare the system
 
 #### `libvirt`
 
-- Installs the full `libvirt` stack including `libvirt`, `qemu-kvm`, `swtpm`, `tigervnc`, etc.
+- Installs the full `libvirt` stack including `libvirt`, `qemu-kvm`, `swtpm`, and optionally `tigervnc-server` when the distribution ships it.
 - Adds the current user to `libvirt` and `qemu` groups for management permissions.
 - Adjusts `libvirtd.conf` and `qemu.conf` to enable TCP listening and non-SELinux isolation.
 - Handles both older and newer `libvirt` versions:

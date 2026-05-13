@@ -71,8 +71,15 @@ function install_libvirt() {
         libgcrypt \
         swtpm \
         swtpm-tools \
-        socat \
-        tigervnc-server
+        socat
+
+    # TigerVNC server RPMs were removed from Enterprise Linux 10+; QEMU still exposes guest graphics via VNC.
+    out=$(sudo dnf repoquery --available -q tigervnc-server 2>/dev/null) || :
+    if [[ -n "${out}" ]]; then
+        sudo dnf install -y tigervnc-server
+    else
+        echo "Skipping tigervnc-server (not in enabled repositories; expected on RHEL and derivatives 10+)."
+    fi
 
     sudo systemctl enable libvirtd
 
