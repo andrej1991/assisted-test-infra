@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-1. Only usage of CentOS8 / RHEL8 / Rocky8 / AlmaLinux on the assisted installer host<sup id="a1">[1](#f1)</sup> is supported
+1. Only usage of CentOS Stream / RHEL / Rocky Linux / AlmaLinux **8**, **9**, or **10** on the assisted installer host<sup id="a1">[1](#f1)</sup> is supported
    - This host will run minikube and the UI for deploying OpenShift on Bare Metal
 1. Setup DHCP/DNS records for the following OpenShift nodes and VIPs. List includes
    - Master nodes
@@ -162,7 +162,7 @@ As `$USER` user with `sudo` privileges,
 - Make sure that the assisted-service is supporting the tested feature
   - For customizing tested components, take a look at [components deployment parameters](README.md#components)
   - The changes are already on assisted-service master branch
-- Make sure to test the changes for both CI-compatible distro (Rocky Linux 8) and QE's compatible environment (RHEL 8.5).
+- Make sure to test the changes on a supported major OS version (see [prerequisites](docs/prerequisites.md)), for example a CI-compatible Rocky Linux release and a current RHEL minor release used by QE.
 - Depends on the test one or more of the following are needed:
   1. Adding environment variables -
      - [skipper.env](https://github.com/openshift/assisted-test-infra/blob/master/skipper.env) - All environment variables that are being used inside assisted-test-infra container must be declared on skipper env file.
@@ -293,7 +293,7 @@ You get `Error: Error creating libvirt domain: virError(Code=38, Domain=18, Mess
 Run `make setup`.
 
 <hr>
-<b id="f1">1</b> It can also be a VM running CentOS8 or RHEL8 and able to do `nested` virtualization as it will run minikube inside. VM should have NICs for connecting to the hosts being installed over bridges at the physical host. [↩](#a1)
+<b id="f1">1</b> It can also be a VM running a supported CentOS Stream / RHEL / Rocky Linux / AlmaLinux **8**, **9**, or **10** release with `nested` virtualization, since the flow runs minikube (or kind) on the host. The VM needs NICs for connecting to the hosts being installed over bridges on the physical host. [↩](#a1)
 
 ---
 

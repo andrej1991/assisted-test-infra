@@ -19,12 +19,18 @@ fi
 
 #Check CentOS version
 VER=$(awk -F= '/^VERSION_ID=/ { print $2 }' /etc/os-release | tr -d '"' | cut -f1 -d'.')
-SUPPORTED_VERSIONS=( 8 9 )
+SUPPORTED_VERSIONS=( 8 9 10 )
 if [[ ! " ${SUPPORTED_VERSIONS[@]} " =~ " ${VER} " ]]; then
     if [[ ${OS} =~ ^(centos)$ ]]; then
-        error "CentOS version 8 or 9 is required."
+        error "CentOS / CentOS Stream major version 8, 9, or 10 is required."
     elif [[ ${OS} =~ ^(rhel)$ ]]; then
-        error "RHEL version 8 or 9 is required."
+        error "RHEL major version 8, 9, or 10 is required."
+    elif [[ ${OS} =~ ^(rocky)$ ]]; then
+        error "Rocky Linux major version 8, 9, or 10 is required."
+    elif [[ ${OS} =~ ^(almalinux)$ ]]; then
+        error "AlmaLinux major version 8, 9, or 10 is required."
+    else
+        error "Major OS version ${VER} is not supported (expected one of: ${SUPPORTED_VERSIONS[*]})."
     fi
     exit 1
 fi

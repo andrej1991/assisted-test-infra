@@ -1,6 +1,6 @@
 # Prerequisites
 
-- CentOS 9 / RHEL 9 / Rocky 9 / AlmaLinux 9 host
+- CentOS Stream / RHEL / Rocky Linux / AlmaLinux host, major version **8**, **9**, or **10**
 - File system that supports d_type
 - Ideally on a bare metal host with at least 64G of RAM.
 - Run as a user with password-less `sudo` access or be ready to enter `sudo` password for prepare phase.
