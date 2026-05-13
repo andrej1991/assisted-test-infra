@@ -178,6 +178,8 @@ else
 
     skipper run src/update_assisted_service_cm.py
 
+    export_kubeconfig_path
+
     (
     cd assisted-service/ && \
     skipper --env-file ../skipper.env run "make deploy-all" \

@@ -3,22 +3,49 @@
 set -o nounset
 
 # kubectl/kind require KUBECONFIG to point at a file. Some environments have
-# ~/.kube/config as a directory (e.g. mis-mounted volumes); use a fallback file.
+# ~/.kube/config (or other usual names) as directories (e.g. mis-mounted volumes).
+# Pick the first candidate path that is not a directory so kubectl can open it.
+# When both default kube paths are directories, prefer /tmp first: skipper mounts
+# $HOME/.kube and /tmp into the container; a kubeconfig file must be readable
+# there and must not live only under broken ~/.kube directory entries.
 function export_kubeconfig_path() {
-    local _default="${HOME}/.kube/config"
-    local _fallback="${HOME}/.kube/kubeconfig"
+    local _p
+    local -a _candidates
 
-    if [[ -n "${KUBECONFIG:-}" ]] && [[ -d "${KUBECONFIG}" ]]; then
-        export KUBECONFIG="${_fallback}"
+    if [[ -n "${KUBECONFIG:-}" ]] && [[ ! -d "${KUBECONFIG}" ]]; then
+        mkdir -p "$(dirname "${KUBECONFIG}")" 2>/dev/null || true
+        export KUBECONFIG
+        return 0
     fi
-    if [[ -z "${KUBECONFIG:-}" ]]; then
-        if [[ -d "${_default}" ]]; then
-            export KUBECONFIG="${_fallback}"
-        else
-            export KUBECONFIG="${_default}"
+
+    if [[ -d "${HOME}/.kube/config" ]] && [[ -d "${HOME}/.kube/kubeconfig" ]]; then
+        _candidates=(
+            "/tmp/assisted-test-infra-kubeconfig.${UID:-0}"
+            "${HOME}/.cache/assisted-test-infra/kubeconfig"
+            "${HOME}/.kube/assisted-test-infra-kubeconfig"
+            "${HOME}/.kube/config"
+            "${HOME}/.kube/kubeconfig"
+        )
+    else
+        _candidates=(
+            "${HOME}/.kube/config"
+            "${HOME}/.kube/kubeconfig"
+            "${HOME}/.kube/assisted-test-infra-kubeconfig"
+            "${HOME}/.cache/assisted-test-infra/kubeconfig"
+            "/tmp/assisted-test-infra-kubeconfig.${UID:-0}"
+        )
+    fi
+
+    for _p in "${_candidates[@]}"; do
+        if [[ ! -d "${_p}" ]]; then
+            export KUBECONFIG="${_p}"
+            mkdir -p "$(dirname "${KUBECONFIG}")" 2>/dev/null || true
+            return 0
         fi
-    fi
-    mkdir -p "${HOME}/.kube"
+    done
+
+    export KUBECONFIG="/tmp/assisted-test-infra-kubeconfig.${UID:-0}"
+    mkdir -p "$(dirname "${KUBECONFIG}")" 2>/dev/null || true
 }
 
 export_kubeconfig_path
