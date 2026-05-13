@@ -2,6 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/utils.sh"
 
 export EXTERNAL_PORT=${EXTERNAL_PORT:-true}
 export ADD_USER_TO_SUDO=${ADD_USER_TO_SUDO:-n}
@@ -16,7 +18,7 @@ function version_is_greater() {
 }
 
 function config_additional_modules() {
-    source /etc/os-release # This should set `PRETTY_NAME` as environment variable
+    load_os_release
 
     case "${PRETTY_NAME}" in
     "Red Hat Enterprise Linux 8"* | "CentOS Linux 8"*)
@@ -53,7 +55,7 @@ function config_additional_modules() {
 function install_libvirt() {
     echo "Installing libvirt-related packages..."
 
-    source /etc/os-release
+    load_os_release
     if [[ "${PRETTY_NAME}" =~ "Rocky Linux 9" ]]; then
       # workaround where libvirt cannot be installed
       # with iptables
@@ -128,9 +130,9 @@ function start_and_enable_libvirtd_tcp_socket() {
     fi
     echo "libvirtd version is greater then 5.5.x, starting libvirtd-tcp.socket"
     echo "Removing --listen flag to libvirt"
-    
-    OS_VERSION=$(awk -F= '/^VERSION_ID=/ { print $2 }' /etc/os-release | tr -d '"' | cut -f1 -d'.')
-    if [[ "${OS_VERSION}" ==  "8" ]]; then
+
+    load_os_release
+    if [[ "${OS_VERSION_MAJOR}" == "8" ]]; then
         sudo sed -i -e 's/LIBVIRTD_ARGS="--listen"/#LIBVIRTD_ARGS="--listen"/g' /etc/sysconfig/libvirtd
     fi
 
@@ -241,7 +243,13 @@ function install_skipper() {
 function config_firewalld() {
     echo "Config firewall"
     sudo dnf install -y firewalld
-    sudo systemctl unmask --now firewalld
+    # systemd on EL 10+ rejects `--now` with `unmask`; RHEL 8/9 accept `unmask --now`.
+    load_os_release
+    if [[ "${OS_VERSION_MAJOR}" == "8" || "${OS_VERSION_MAJOR}" == "9" ]]; then
+        sudo systemctl unmask --now firewalld
+    else
+        sudo systemctl unmask firewalld
+    fi
     sudo systemctl start firewalld
 
     # Restart to see we are using firewalld
@@ -252,8 +260,8 @@ function config_squid() {
     echo "Config squid"
     sudo dnf install -y squid
 
-    OS_VERSION=$(awk -F= '/^VERSION_ID=/ { print $2 }' /etc/os-release | tr -d '"' | cut -f1 -d'.')
-    if [[ "${OS_VERSION}" ==  "8" ]]; then
+    load_os_release
+    if [[ "${OS_VERSION_MAJOR}" == "8" ]]; then
         sudo sed -i  -e '/^.*allowed_ips.*$/d' \
             -e '/^acl CONNECT.*/a acl allowed_ips src 1001:db8::/120' \
             -e '/^acl CONNECT.*/a acl allowed_ips src 1001:db8:0:200::/120' \

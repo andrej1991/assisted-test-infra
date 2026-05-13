@@ -4,13 +4,19 @@ set -o errexit
 
 export PATH=${PATH}:/usr/local/bin
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/utils.sh"
+
 
 function error() {
     echo $@ 1>&2
 }
 
+load_os_release || { error "Cannot read /etc/os-release"; exit 1; }
+
 # Check OS
-OS=$(awk -F= '/^ID=/ { print $2 }' /etc/os-release | tr -d '"')
+OS="${OS_ID}"
 if [[ ! ${OS} =~ ^(ol)$ ]] && [[ ! ${OS} =~ ^(centos)$ ]] && [[ ! ${OS} =~ ^(rhel)$ ]] && [[ ! ${OS} =~ ^(rocky)$ ]] && [[ ! ${OS} =~ ^(almalinux)$ ]]; then
     error "\"${OS}\" is an unsupported OS. We support only CentOS, RHEL, Rocky or AlmaLinux."
     error "It's not recommended to run the code in this repo locally on your personal machine, as it makes some opinionated configuration changes to the machine it's running on"
@@ -18,7 +24,7 @@ if [[ ! ${OS} =~ ^(ol)$ ]] && [[ ! ${OS} =~ ^(centos)$ ]] && [[ ! ${OS} =~ ^(rhe
 fi
 
 #Check CentOS version
-VER=$(awk -F= '/^VERSION_ID=/ { print $2 }' /etc/os-release | tr -d '"' | cut -f1 -d'.')
+VER="${OS_VERSION_MAJOR}"
 SUPPORTED_VERSIONS=( 8 9 10 )
 if [[ ! " ${SUPPORTED_VERSIONS[@]} " =~ " ${VER} " ]]; then
     if [[ ${OS} =~ ^(centos)$ ]]; then

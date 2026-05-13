@@ -5,6 +5,40 @@ set -o nounset
 export KUBECONFIG=${KUBECONFIG:-$HOME/.kube/config}
 export NAMESPACE=${NAMESPACE:-assisted-installer}
 
+# Reads /etc/os-release once per shell and exports OS_ID, OS_VERSION_ID,
+# OS_VERSION_MAJOR, OS_PRETTY_NAME. Exports PRETTY_NAME (always set after load)
+# using os-release fields or a synthesized value when PRETTY_NAME is absent.
+function load_os_release() {
+    [[ -n "${__OS_RELEASE_LOADED:-}" ]] && return 0
+    [[ -r /etc/os-release ]] || return 1
+    # shellcheck disable=SC1091
+    source /etc/os-release
+    export OS_ID="${ID:-}"
+    export OS_VERSION_ID="${VERSION_ID:-}"
+    local _vid="${VERSION_ID:-}"
+    export OS_VERSION_MAJOR="${_vid%%.*}"
+
+    local _pretty="${PRETTY_NAME:-}"
+    if [[ -z "${_pretty}" ]]; then
+        if [[ -n "${NAME:-}" && -n "${VERSION:-}" ]]; then
+            _pretty="${NAME} ${VERSION}"
+        elif [[ -n "${NAME:-}" ]]; then
+            _pretty="${NAME}"
+        elif [[ -n "${ID:-}" ]]; then
+            _pretty="${ID} ${_vid}"
+        else
+            _pretty="Linux"
+        fi
+    fi
+    export PRETTY_NAME="${_pretty}"
+    export OS_PRETTY_NAME="${_pretty}"
+    export __OS_RELEASE_LOADED=1
+    echo "PRETTY_NAME: ${PRETTY_NAME}"
+    echo "OS_PRETTY_NAME: ${OS_PRETTY_NAME}"
+    echo "OS_VERSION_MAJOR: ${OS_VERSION_MAJOR}"
+    echo "OS_VERSION_ID: ${OS_VERSION_ID}"
+}
+
 function get_namespace_index() {
     namespace=$1
     oc_flag=${2:-}
